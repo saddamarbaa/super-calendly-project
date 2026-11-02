@@ -1,24 +1,23 @@
 import app from './app.js'
-import { connectDatabase, disconnectDatabase } from './config/database.js'
 import { PORT } from './config/env.js'
+import { connectDatabase, disconnectDatabase } from './config/database.js'
 
 export async function startServer(): Promise<void> {
 	try {
-		// Connect to PostgreSQL first
 		await connectDatabase()
 
 		const server = app.listen(PORT, () => {
 			console.log(`Server is running on port ${PORT}`)
 		})
 
-		// Handle graceful shutdown
-		const shutdown = async (): Promise<void> => {
+		const shutdown = async () => {
 			console.log('Shutting down server...')
 
 			server.close(async (error) => {
 				if (error) {
-					console.error('Failed to close server:', error)
+					console.error('Server shutdown failed:', error)
 					process.exit(1)
+					return
 				}
 
 				try {
@@ -35,6 +34,7 @@ export async function startServer(): Promise<void> {
 		process.on('SIGTERM', shutdown)
 	} catch (error) {
 		console.error('Failed to start server:', error)
+
 		await disconnectDatabase().catch(() => {})
 		process.exit(1)
 	}
